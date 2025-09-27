@@ -8,11 +8,10 @@ let __snipActive = false;
 // use chrome API to capture tab visible area
 const captureTab = (rect?: cropArea) => { // @ts-ignore
     return chrome.runtime.sendMessage({ type: "CAPTURE", rect })?.then?.(res => {
+        showToast(res?.ok ? "Copying is done" : (res?.error || "Failed to copy"));
         return (res || { ok: false, error: "no response" });
     })?.catch?.(err => console.warn(err));
 }
-
-//showToast(res?.ok ? "Copying is done" : (res?.error || "Failed to copy"));
 
 //
 export const startSnip = (() => { // @ts-ignore

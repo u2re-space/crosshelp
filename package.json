@@ -24,6 +24,7 @@
         "@types/node": "*",
         "autoprefixer": "^10.4.16",
         "cbor-x": "^1.5.9",
+        "chrome-types": "^0.1.379",
         "clean-webpack-plugin": "^4.0.0",
         "eslint-config-prettier": "^9.1.0",
         "fflate": "^0.8.2",

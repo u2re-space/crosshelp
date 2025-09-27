@@ -4,6 +4,7 @@ import { lastElement, saveCoordinate } from "../$utils$/state";
 export * from "./operations";
 export * from "./service";
 export * from "./snip";
+export * from "./copy";
 
 //
 document.addEventListener("pointerup", saveCoordinate, {passive: true});

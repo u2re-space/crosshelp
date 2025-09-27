@@ -18,13 +18,44 @@ import { encodeWithJSquash } from "../$utils$/compress";
 import { recognizeImage } from "./api";
 
 //
-const ableToShowJPEG = async (data_url: string) => { // @ts-ignore
-    const bitmap: any = await createImageBitmap(new Blob([Uint8Array.fromBase64(data_url?.replace?.('data:image/jpeg;base64,', ""), { alphabet: "base64" })], { type: "image/png" }))?.catch?.(e => { console.warn(e); return null; });
-    return bitmap?.width > 0 && bitmap?.height > 0;
+const removeAnyDataPrefix = (b64url: string) => {
+    return b64url?.replace?.('data:image/png;base64,', "")?.replace?.(/data:image\/jpeg;base64,/, "");
 }
 
 //
-const COPY_HACK = (ext, data, tabId?)=>{
+const getMimeFromDataURL = (data_url: string) => {
+    return data_url?.match?.(/data:image\/(.*);base64,/)?.[1] || "image/png";
+}
+
+//
+const ableToShowImage = async (data_url: string) => { // @ts-ignore
+    const bitmap: any = await createImageBitmap(new Blob([Uint8Array.fromBase64(removeAnyDataPrefix(data_url), { alphabet: "base64" })], { type: getMimeFromDataURL(data_url) }))?.catch?.(e => { console.warn(e); return null; });
+    return bitmap?.width > 0 && bitmap?.height > 0;
+}
+
+
+
+//
+export async function createOffscreen() {
+    if (await chrome.offscreen.hasDocument()?.catch?.(console.warn.bind(console))) return;
+    await chrome.offscreen.createDocument({
+        url: 'src/$offscreen$/copy.html',
+        reasons: [chrome.offscreen.Reason.CLIPBOARD],
+        justification: 'Use clipboard API'
+    })?.catch?.(console.warn.bind(console));
+}
+
+//
+//
+const COPY_HACK = (ext, data, tabId?) => {
+/*
+await createOffscreen();
+return chrome.runtime.sendMessage({
+    target: 'offscreen',
+    type: 'COPY_HACK',
+    ...data
+});*/
+
     return ext.tabs.query({
         currentWindow: true,
         lastFocusedWindow: true,
@@ -54,14 +85,18 @@ export const enableCapture = (ext) => {
                     console.error(chrome.runtime.lastError);
                     sendResponse({ ok: false, error: chrome.runtime.lastError.message, dataUrl: $dataUrl });
                 } else {
-                    // @ts-ignore
-                    const bitmap = await createImageBitmap(new Blob([Uint8Array.fromBase64($dataUrl?.replace?.('data:image/png;base64,', ""), { alphabet: "base64" })], { type: "image/png" })/*, rect.x, rect.y, rect.width, rect.height*/);
-                    const arrayBuffer = await encodeWithJSquash(bitmap)?.catch?.(e => { console.warn(e); return null; }); bitmap?.close?.(); // @ts-ignore
-                    let dataUrl = arrayBuffer ? `data:image/jpeg;base64,${new Uint8Array(arrayBuffer)?.toBase64?.({ alphabet: "base64" })}` : $dataUrl;
+
+                    // may be too large, try to compress
+                    let dataUrl = $dataUrl;
+                    if (dataUrl.length > 1024 * 1024 * 2) {
+                        // @ts-ignore
+                        const bitmap = await createImageBitmap(new Blob([Uint8Array.fromBase64(removeAnyDataPrefix(dataUrl), { alphabet: "base64" })], { type: getMimeFromDataURL(dataUrl) })/*, rect.x, rect.y, rect.width, rect.height*/);
+                        const arrayBuffer = await encodeWithJSquash(bitmap)?.catch?.(e => { console.warn(e); return null; }); bitmap?.close?.(); // @ts-ignore
+                        dataUrl = arrayBuffer ? `data:image/jpeg;base64,${new Uint8Array(arrayBuffer)?.toBase64?.({ alphabet: "base64" })}` : $dataUrl;
+                    }
 
                     //
-                    if (!dataUrl || !(await ableToShowJPEG(dataUrl))) {
-                        //sendResponse({ ok: false, error: "Unable to show JPEG", dataUrl });
+                    if (!dataUrl || !(await ableToShowImage(dataUrl))) {
                         dataUrl = $dataUrl;
                     }
 
