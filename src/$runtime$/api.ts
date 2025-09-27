@@ -7,12 +7,11 @@ const DEFAULT_API_URL = 'https://api.proxyapi.ru/openai/v1/';
 const ENDPOINT = 'responses';
 
 //
-const INSTRUCTION = `
-Recognize data from image, also preferred to orient by fonts in image.
+const INSTRUCTION = `Recognize data from image, also preferred to orient by fonts in image.
 
 In recognition result, do not include image itself.
 
-In recognited from image data (what you seen in image), do:
+In recognized from image data (what you seen in image), do:
 - If textual content, format as Markdown string (multiline).
 - If math (expression, equation, formula), format as $KaTeX$
 - If table (or looks alike table), format as | table |
@@ -20,6 +19,9 @@ In recognited from image data (what you seen in image), do:
 - If code, format as \`\`\`$code$\`\`\` (multiline) or \`$code$\` (single-line)
 - If JSON, format as JSON string.
 - If phone number, format as as correct phone number (in normalized format).
+  - If phone numbers (for example starts with +7, format as 8), replace to correct regional code.
+  - Trim spaces from phone numbers, emails, URLs, dates, times, codes, etc.
+  - Remove brackets, parentheses, spaces or other symbols from phone numbers.
 - If email, format as as correct email (in normalized format).
 - If URL, format as as correct URL (in normalized format).
 - If date, format as as correct date (in normalized format).
@@ -28,7 +30,8 @@ In recognited from image data (what you seen in image), do:
 - If seen alike list, format as list (in markdown format).
 
 If nothing found, return "No data recognized".
-`;
+
+By default, return data in Markdown string format.`;
 
 //
 export const recognizeImage = async (msg, sendResponse?) => {

@@ -5,57 +5,57 @@ export const ext: any = typeof chrome != 'undefined' ? chrome : (typeof browser 
 
 //
 export const dummy = (unsafe)=>{
-    return unsafe?.trim()?.replace?.(/&amp;/g, '&')
-    ?.replace?.(/&lt;/g, '<')
-    ?.replace?.(/&gt;/g, '>')
-    ?.replace?.(/&quot;/g, '"')
-    ?.replace?.(/&nbsp;/g, " ")
-    ?.replace?.(/&#39;/g, "'") || unsafe;
+    return (unsafe?.trim()?.replace?.(/&amp;/g, '&')
+        ?.replace?.(/&lt;/g, '<')
+        ?.replace?.(/&gt;/g, '>')
+        ?.replace?.(/&quot;/g, '"')
+        ?.replace?.(/&nbsp;/g, " ")
+        ?.replace?.(/&#39;/g, "'") || unsafe)?.trim?.();
 }
 
 //
 export const weak_dummy = (unsafe)=>{
-    return unsafe?.trim()?.replace?.(/&amp;/g, '&')
-    ?.replace?.(/&nbsp;/g, " ")
-    ?.replace?.(/&quot;/g, '"')
-    ?.replace?.(/&#39;/g, "'") || unsafe;
+    return (unsafe?.trim()?.replace?.(/&amp;/g, '&')
+        ?.replace?.(/&nbsp;/g, " ")
+        ?.replace?.(/&quot;/g, '"')
+        ?.replace?.(/&#39;/g, "'") || unsafe)?.trim?.();
 }
 
 //
 export const tryXML = (unsafe: string): string => {
-    const doc = new DOMParser().parseFromString(unsafe, "text/xml");
+    const doc = new DOMParser().parseFromString(unsafe?.trim?.(), "text/xml");
     if (doc?.querySelector("parsererror") || !doc) {
-        return dummy(unsafe) || unsafe;
+        return (dummy(unsafe) || unsafe)?.trim?.();
     };
-    return weak_dummy(doc?.documentElement?.textContent) || dummy(unsafe) || unsafe;
+    return (weak_dummy(doc?.documentElement?.textContent) || dummy(unsafe) || unsafe)?.trim?.();
 }
 
 //
 export const serialize = (xml: any): string => {
     const s = new XMLSerializer();
-    return typeof xml == "string" ? xml : xml?.outerHTML || s.serializeToString(xml);
+    return (typeof xml == "string" ? xml : xml?.outerHTML || s.serializeToString(xml))?.trim?.();
 }
 
 //
 export const escapeML = (unsafe: string): string => {
     if (/&amp;|&quot;|&#39;|&lt;|&gt;|&nbsp;/.test(unsafe.trim())) {
         if (unsafe?.trim()?.startsWith?.("&lt;") && unsafe?.trim()?.endsWith?.("&gt;")) {
-            return tryXML(unsafe) || dummy(unsafe) || unsafe;
+            return (tryXML(unsafe) || dummy(unsafe) || unsafe)?.trim?.();
         }
         if (!(unsafe?.trim()?.startsWith?.("<") && unsafe?.trim()?.endsWith?.(">"))) {
-            return dummy(unsafe) || unsafe;
+            return (dummy(unsafe) || unsafe)?.trim?.();
         }
     }
-    return weak_dummy(unsafe) || unsafe;
+    return (weak_dummy(unsafe) || unsafe)?.trim?.();
 }
 
 // such as ChatGPT
 export const extractFromAnnotation = (math: any): string =>{
     if (!math.matches(".katex math, math.katex")) return "";
     const A = math?.querySelector?.("annotation");
-    const C = A.textContent || "";
-    const Q = C.replace(/^["'](.+(?=["']$))["']$/, '$1') || (C || "");
-    return (escapeML(Q) || Q);
+    const C = (A.textContent || "")?.trim?.();
+    const Q = (C.replace(/^["'](.+(?=["']$))["']$/, '$1') || (C || ""))?.trim?.();
+    return (escapeML(Q) || Q)?.trim?.();
 }
 
 //

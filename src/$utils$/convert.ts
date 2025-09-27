@@ -67,7 +67,10 @@ export const copyAsHTML = async (target: HTMLElement)=>{ // copy markdown text a
 }
 
 //
-const deAlphaChannel = async (src: string)=>{
+const deAlphaChannel = async (src: string) => {
+//if (URL.canParse(src)) return src;
+
+//
     const img = new Image();
     {
         img.crossOrigin = "Anonymous";
@@ -130,9 +133,9 @@ export const copyAsTeX = async (target: HTMLElement)=>{
     }
 
     //
-    const original = LaTeX;
+    const original = LaTeX?.trim?.();
     try { LaTeX = MathMLToLaTeX.convert(LaTeX); } catch (e) { LaTeX = ""; console.warn(e); }
-    LaTeX ||= original;
+    LaTeX ||= original?.trim?.();
 
     // try AI recognition if is image with URL in src or srcset
     if (!LaTeX && forRecognition) {
@@ -153,10 +156,27 @@ export const copyAsTeX = async (target: HTMLElement)=>{
     }
 
     //
-    const resultText = $wrap$(LaTeX?.trim?.()?.normalize?.()?.trim?.() || LaTeX?.trim?.() || LaTeX);
+    const resultText = $wrap$(LaTeX?.trim?.()?.normalize?.()?.trim?.() || LaTeX?.trim?.());
+    if (resultText) { navigator.clipboard.writeText(resultText)?.catch?.((e) => { console.warn(e); }); }
+    return resultText?.trim?.();
+}
 
-    //navigator.clipboard.writeText("$"+LaTeX+"$");
-    if (resultText) { navigator.clipboard.writeText(resultText)?.catch?.((e)=> { console.warn(e); }); }
+//
+function stripMathDelimiters(input) {
+    const s = String(input).trim();
+
+    // Альтернация для разных парных делимитеров:
+    // 1: $$ ... $$
+    // 2: $  ... $
+    // 3: \[ ... \]
+    // 4: \( ... \)
+    // 5: \begin{name} ... \end{name}
+    const re = /^\s*(?:\$\$([\s\S]*?)\$\$|\$([\s\S]*?)\$|\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)|\\begin\{([^\}]+)\}([\s\S]*?)\\end\{\5\})\s*$/;
+
+    const m = s.match(re);
+    if (!m) return s; // нет внешних делимитеров — вернём строку (trimmed)
+    // вернуть первую непустую захваченную группу (т.е. содержимое)
+    return (m[1] ?? m[2] ?? m[3] ?? m[4] ?? m[6] ?? "").trim();
 }
 
 // copy mathml DOM as mathml
@@ -166,23 +186,22 @@ export const copyAsMathML = async (target: HTMLElement)=>{ // copy mathml DOM as
     const mjax = bySelector(target, "[data-mathml]");
     const orig = bySelector(target, "[data-original]");
     const expr = bySelector(target, "[data-expr]");
-    const img  = bySelector(target, ".mwe-math-fallback-image-inline[alt], .mwe-math-fallback-image-display[alt]");
-    const forRecognition: any = bySelector(target, "img:is([src],[srcset]), picture:has(img)");
+    const img = bySelector(target, ".mwe-math-fallback-image-inline[alt], .mwe-math-fallback-image-display[alt]");
 
     //
-    let mathML = img?.getAttribute?.("alt") || "" || "";
+    let mathML = (img?.getAttribute?.("alt") || "" || "")?.trim?.();
 
     //
     try {
         if (!mathML) {
             // @ts-ignore
-            const st = math?.innerHTML || math?.outerHTML || "";
+            const st = (math?.innerHTML || math?.outerHTML || "")?.trim?.();
             if (!st && math) {
                 // @ts-ignore
                 const str = serialize(math);
-                mathML = escapeML(str || st || mathML);
+                mathML = escapeML(str || st || mathML)?.trim?.();
             }
-            if (st) { mathML = escapeML(st || mathML); };
+            if (st) { mathML = escapeML(st || mathML)?.trim?.(); };
         }
         if (!mathML) { const ml = mjax?.getAttribute("data-mathml") || ""; mathML = (ml ? escapeML(ml) : mathML) || mathML; }
         if (!mathML) { const ml = expr?.getAttribute("data-expr") || ""; mathML = (ml ? escapeML(ml) : mathML) || mathML; }
@@ -192,21 +211,23 @@ export const copyAsMathML = async (target: HTMLElement)=>{ // copy mathml DOM as
     }
 
     //
-    const original = mathML;
+    const original = mathML?.trim?.(); // try use KaTeX, and after re-render as MathML
+    if (!mathML) { mathML ||= (await copyAsTeX(target))?.trim?.() || original; }
 
     //
     if (!(mathML?.trim()?.startsWith?.("<") && mathML?.trim()?.endsWith?.(">"))) {
-        try { mathML = escapeML(temml.renderToString(mathML, {
-            throwOnError: true,
-            strict: false,
-            xml: true
-        }) || "") || mathML; } catch (e) { mathML = ""; console.warn(e); }
+        try {
+            mathML = escapeML(temml.renderToString(stripMathDelimiters(mathML), {
+                throwOnError: true,
+                strict: false,
+                trust: true,
+                xml: true
+            }) || "")?.trim?.() || mathML;
+        } catch (e) { mathML = ""; console.warn(e); }
     }
-    mathML ||= original;
-
-    // TODO! our recognition instruction won't support MathML, due KaTeX priority
-    // TODO: Add AI recognition and conversion (from images), and use it if not MathML
 
     //
+    mathML ||= original?.trim?.();
     if (mathML?.trim()) { navigator.clipboard.writeText(mathML?.trim?.()?.normalize?.()?.trim?.() || mathML?.trim?.() || mathML)?.catch?.((e)=> { console.warn(e); }); }
+    return mathML?.trim?.();
 }

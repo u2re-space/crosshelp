@@ -36,7 +36,7 @@
         "rimraf": "^5.0.7",
         "sass": "^1.77.6",
         "scss": "^0.2.4",
-        "temml": "^0.11.10",
+        "temml": "^0.11.11",
         "terser": "^5.34.1",
         "terser-webpack-plugin": "^5.3.10",
         "ts-loader": "^9.5.1",
