@@ -67,32 +67,6 @@ export const copyAsHTML = async (target: HTMLElement)=>{ // copy markdown text a
 }
 
 //
-const deAlphaChannel = async (src: string) => {
-//if (URL.canParse(src)) return src;
-
-//
-    const img = new Image();
-    {
-        img.crossOrigin = "Anonymous";
-        img.decoding = "async";
-        img.src = src;
-        await img.decode();
-    }
-
-    //
-    const canvas = new OffscreenCanvas(img.naturalWidth, img.naturalHeight);
-    const ctx = canvas.getContext("2d");
-    ctx!.fillStyle = "white";
-    ctx?.fillRect(0, 0, canvas.width, canvas.height);
-    ctx?.drawImage(img, 0, 0);
-    const imgData = ctx?.getImageData(0, 0, canvas.width, canvas.height);
-    const arrayBuffer = await encodeWithJSquash(imgData);
-
-    // @ts-ignore
-    return arrayBuffer ? `data:image/jpeg;base64,${new Uint8Array(arrayBuffer)?.toBase64?.({ alphabet: "base64" })}` : null;
-}
-
-//
 const $wrap$ = (katex: string)=>{
     if (katex?.startsWith?.("$") && katex?.endsWith?.("$")) {
         return katex;
@@ -140,7 +114,7 @@ export const copyAsTeX = async (target: HTMLElement)=>{
     // try AI recognition if is image with URL in src or srcset
     if (!LaTeX && forRecognition) {
         const img = new URL(forRecognition?.currentSrc || forRecognition?.src || forRecognition?.getAttribute?.("src"), window?.location?.origin)?.href;
-        const dataUrl = img ? await deAlphaChannel(img) : null;
+        const dataUrl = img;
         if (dataUrl) {
             const res = await chrome.runtime.sendMessage({
                 type: "gpt:recognize",

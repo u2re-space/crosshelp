@@ -73,6 +73,32 @@ return chrome.runtime.sendMessage({
     if (tabId != null && tabId >= 0) { return chrome.tabs.sendMessage?.(tabId, { type: "COPY_HACK", ...data })?.catch?.(console.warn.bind(console)); }
 }
 
+//
+const deAlphaChannel = async (src: string) => {
+    //if (URL.canParse(src)) return src;
+
+    //
+    const img = new Image();
+    {
+        img.crossOrigin = "Anonymous";
+        img.decoding = "async";
+        img.src = src;
+        await img.decode();
+    }
+
+    //
+    const canvas = new OffscreenCanvas(img.naturalWidth, img.naturalHeight);
+    const ctx = canvas.getContext("2d");
+    ctx!.fillStyle = "white";
+    ctx?.fillRect(0, 0, canvas.width, canvas.height);
+    ctx?.drawImage(img, 0, 0);
+    const imgData = ctx?.getImageData(0, 0, canvas.width, canvas.height);
+    const arrayBuffer = await encodeWithJSquash(imgData);
+
+    // @ts-ignore
+    return arrayBuffer ? `data:image/jpeg;base64,${new Uint8Array(arrayBuffer)?.toBase64?.({ alphabet: "base64" })}` : null;
+}
+
 
 
 // service worker makes screenshot of visible area
@@ -85,10 +111,11 @@ export const enableCapture = (ext) => {
                     console.error(chrome.runtime.lastError);
                     sendResponse({ ok: false, error: chrome.runtime.lastError.message, dataUrl: $dataUrl });
                 } else {
-
                     // may be too large, try to compress
                     let dataUrl = $dataUrl;
                     if (dataUrl.length > 1024 * 1024 * 2) {
+                        dataUrl = (await deAlphaChannel(dataUrl)) ?? dataUrl;
+
                         // @ts-ignore
                         const bitmap = await createImageBitmap(new Blob([Uint8Array.fromBase64(removeAnyDataPrefix(dataUrl), { alphabet: "base64" })], { type: getMimeFromDataURL(dataUrl) })/*, rect.x, rect.y, rect.width, rect.height*/);
                         const arrayBuffer = await encodeWithJSquash(bitmap)?.catch?.(e => { console.warn(e); return null; }); bitmap?.close?.(); // @ts-ignore
