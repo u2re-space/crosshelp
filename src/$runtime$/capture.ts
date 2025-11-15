@@ -106,7 +106,7 @@ export const enableCapture = (ext) => {
                         input: [{
                             role: "user",
                             content: [ //@ts-ignore
-                                {type: "input_image", image_url: dataUrl, detail: "high"}
+                                { type: "input_image", image_url: dataUrl, detail: "auto" }
                             ]
                         }]
                     });

@@ -147,7 +147,7 @@ export const copyAsTeX = async (target: HTMLElement)=>{
                 input: [{
                     role: "user",
                     content: [
-                        { type: "input_image", image_url: dataUrl, detail: "high" }
+                        { type: "input_image", image_url: dataUrl, detail: "auto" }
                     ]
                 }]
             });
